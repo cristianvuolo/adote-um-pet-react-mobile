@@ -1,50 +1,89 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, TouchableOpacity, StyleSheet, Image, Text, SafeAreaView} from "react-native";
 import {Feather as Icon, FontAwesome as FA} from "@expo/vector-icons";
-import {useNavigation} from "@react-navigation/native";
+import {useNavigation, useRoute} from "@react-navigation/native";
 import {RectButton} from "react-native-gesture-handler";
 import Constants from "expo-constants";
+import api from "../../services/api";
+import * as MailComposer from 'expo-mail-composer';
+import {Linking} from "expo";
 
+interface Params {
+    point_id: number
+}
+
+interface User {
+        email: string
+        image_url: string
+        whatsapp: string
+        uf: string
+        city: string
+        name: string
+        items: string[]
+}
 
 const Detail = () => {
     const navigation = useNavigation();
+    const route = useRoute();
+
+    const [data, setData] = useState<User>({} as User);
+
+    const routeParams = route.params as Params;
+
+    useEffect(() => {
+        api.get(`users/${routeParams.point_id}`).then(response => {
+            setData(response.data)
+            console.log(data)
+        })
+    }, [])
+
 
     function handleNavigateBack() {
         navigation.goBack();
     }
 
+    function handleComposeMail() {
+        MailComposer.composeAsync({
+            subject: 'Adoção',
+            recipients: [data.email]
+        }).then()
+    }
+
+    function handleWhatsapp() {
+        Linking.openURL(`whatsapp://send?phone=${data.whatsapp}&text=Adoção`)
+    }
+
     return (
-        <SafeAreaView style={{flex:1}}>
+        <SafeAreaView style={{flex: 1}}>
             <View style={styles.container}>
                 <TouchableOpacity onPress={handleNavigateBack}>
                     <Icon name="arrow-left" size={20} color="#35cb79"/>
                 </TouchableOpacity>
                 <Image style={styles.pointImage}
-                       source={{uri: 'https://images.unsplash.com/photo-1544568100-847a948585b9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=967&q=80'}}/>
+                       source={{uri: data.image_url}}/>
 
                 <Text style={styles.pointName}>
-                    Doguineo
+                    {data.name}
                 </Text>
                 <Text style={styles.pointItems}>
-                    Pelo Curto, Dócil
+                    {data.items?.join(", ")}
                 </Text>
                 <View style={styles.address}>
                     <Text style={styles.addressTitle}>Endereço</Text>
-                    <Text style={styles.addressContent}>cidade, UF</Text>
+                    <Text style={styles.addressContent}>{data.city}, {data.uf}</Text>
                 </View>
             </View>
             <View style={styles.footer}>
                 <RectButton
-                style={styles.button}
-                onPress={() => {}}
-                >
+                    style={styles.button}
+                    onPress={handleWhatsapp}>
                     <FA name="whatsapp" size={20} color="#fff"/>
                     <Text style={styles.buttonText}>Whatsapp</Text>
                 </RectButton>
 
                 <RectButton
                     style={styles.button}
-                    onPress={() => {}}
+                    onPress={handleComposeMail}
                 >
                     <Icon name="mail" size={20} color="#fff"/>
                     <Text style={styles.buttonText}>E-mail</Text>
@@ -58,7 +97,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 32,
-        paddingTop: 20+ + Constants.statusBarHeight,
+        paddingTop: 20 + +Constants.statusBarHeight,
     },
 
     pointImage: {
