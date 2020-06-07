@@ -1,12 +1,11 @@
-import React from "react";
+import React from 'react';
 import {View} from "react-native";
 
-const Home = () => {
+const Points = () => {
     return (
         <View>
 
         </View>
     );
 }
-
-export default Home;
+export default Points;
